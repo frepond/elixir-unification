@@ -1,0 +1,7 @@
+/ebin
+/deps
+erl_crash.dump
+*.ez
+
+/unification.sublime-workspace
+/unification.sublime-project
