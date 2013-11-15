@@ -40,13 +40,30 @@ defmodule UnificationTest do
   	v1_set = HashSet.new(["V1"])
   	fnn_set = HashSet.new(["V1", "V2"])
 
-  	assert(Unification.vars_in(const) == empty_set)
-  	assert(Unification.vars_in(fixed) == empty_set)
+  	assert(vars_in(const) == empty_set)
+  	assert(vars_in(fixed) == empty_set)
 
-  	assert(Unification.vars_in(var1) == v1_set)
-  	assert(Unification.vars_in(fn1) == v1_set)
+  	assert(vars_in(var1) == v1_set)
+  	assert(vars_in(fn1) == v1_set)
 
-  	assert(Unification.vars_in(fnn) == fnn_set)
+  	assert(vars_in(fnn) == fnn_set)
+  end
+
+  test "unification" do
+  	f1 = mk_fun "f", [mk_var("V1"), mk_fun("g", [mk_fun("x", [])])]
+	 	f2 = mk_fun "f", [mk_fun("y", []), mk_fun("g", [mk_var("V3")])]
+
+	 	assert(unify(f1, f2) == HashDict.new([{"V1", mk_fun("y", [])}, {"V3", mk_fun("x", [])}]))
+
+
+		f3 = mk_fun "f", [mk_var("V1"), mk_var("V2")]
+		f4 = mk_fun "f", [mk_var("V3"), mk_fun("x", [])]
+
+		assert(unify(f3, f4) == HashDict.new([{"V1", mk_var("V3")}, {"V2", mk_fun("x", [])}]))
+
+		f5 = mk_fun "f", [mk_var("V3"), mk_fun("y", [])]
+
+		assert(unify(f4, f5) == :nothing)
   end
 end
 

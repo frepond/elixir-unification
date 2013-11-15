@@ -4,14 +4,14 @@ defmodule Unification do
 		Used just to test some basic Elixir.
 	"""
 
-	@type term :: Var | Fun
+	@type uterm :: var_t | fun_t
 	@type subst :: HashDict
 
 	@empty_subst HashDict.new()
 
-	defrecordp :var, name: ""
+	defrecordp :var, name: "" :: String
   
-  defrecordp :fun, name: "", terms: []
+  defrecordp :fun, name: "" :: String, terms: [] :: list(term)
 
   defimpl Inspect, for: :var do
   	@doc """
@@ -54,7 +54,7 @@ defmodule Unification do
   	end
   end
 
-  @spec vars_in(list(term)) :: list
+  @spec vars_in(term) :: HashSet
   def vars_in term do
   	case term do
   		{:var, v} -> 
@@ -64,21 +64,22 @@ defmodule Unification do
   	end
   end
 
-  @spec uapply(subst, term) :: term
+  @spec uapply(subst, uterm) :: uterm
   def uapply substs, term do
   	case term do
-  		{Var, v} -> 
+  		{:var, v} -> 
   			HashDict.get(substs, v, {:var, v})
   		{:fun, n, terms} -> 
   			{:fun, n, Enum.map(terms, fn x -> uapply substs, x end)}
   	end
   end
 
+  # @spec uapplyl(subst, list(uterm)) :: list(uterm)
   defp uapplyl substs, terms do
   	Enum.map terms, fn(t) -> uapply substs, t end
   end
 
-  @spec unify(term, term) :: subst
+  @spec unify(uterm, uterm) :: HashDict | :nothing
   def unify lst, rst do
   	case {lst, rst} do
   		{{:var, lvn}, {Var, lvn}} -> 
@@ -91,7 +92,7 @@ defmodule Unification do
   			else
   				HashDict.put(@empty_subst, lvn, {:fun, rfn, ts})
   			end
-  		{{:fun, lfn, ts}, {Var, rvn}} ->
+  		{{:fun, lfn, ts}, {:var, rvn}} ->
   			if HashSet.member?(vars_in({:fun, lfn, ts}), rvn) do
   				:nothing
   			else 
@@ -102,6 +103,7 @@ defmodule Unification do
   	end
   end
 
+  @spec unifyl(list(uterm), list(uterm)) :: HashDict
   defp unifyl left, right do
   	case {left, right} do
   		{[], []} ->
@@ -117,10 +119,12 @@ defmodule Unification do
   	end	
   end
 
+  @spec mk_var(String) :: uterm
   def mk_var name do
   	var(name: name)
 	end
 
+	@spec mk_fun(String, list(uterm)) :: uterm
 	def mk_fun name, terms do
 		fun(name: name, terms: terms)
 	end
